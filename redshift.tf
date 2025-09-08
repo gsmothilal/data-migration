@@ -19,8 +19,18 @@ resource "aws_security_group" "redshift_sg" {
   }
 }
 
-data "aws_vpc" "default" { default = true }
-data "aws_subnet_ids" "default" { vpc_id = data.aws_vpc.default.id }
+# Lookup default VPC
+data "aws_vpc" "default" {
+  default = true
+}
+
+# ✅ Updated to aws_subnets (instead of aws_subnet_ids)
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
 
 resource "aws_redshift_cluster" "main" {
   cluster_identifier     = "${var.project}-redshift"
@@ -34,5 +44,7 @@ resource "aws_redshift_cluster" "main" {
   vpc_security_group_ids = [aws_security_group.redshift_sg.id]
   skip_final_snapshot    = true
 
-  tags = { Name = "${var.project}-redshift" }
+  tags = {
+    Name = "${var.project}-redshift"
+  }
 }
